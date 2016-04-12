@@ -21,14 +21,14 @@
         return directive;
 
         /** @ngInject */
-        function ChartController($scope, $filter) {
+        function ChartController($scope, $filter, $timeout) {
 
             var vm = this;
 
             vm.options = {
                 chart: {
                     type: 'multiBarChart',
-                    height: 450,
+                    height: 500,
                     margin: {
                         top: 20,
                         right: 20,
@@ -46,16 +46,16 @@
                           elementClick: function(e){
                               var found = false;
                               angular.forEach(vm.data.keywords, function(value) {
-                                  if(value.type.typeValue == 'startDate' && value.keyword instanceof Date) {
+                                  if(value.date !== undefined && value.type.typeValue == 'startDate' && value.date instanceof Date) {
                                       found = true;
-                                      value.keyword = e.data[0];
+                                      value.date = e.data[0];
                                   }
 
                               });
                               if(!found) {
                                   vm.data.keywords.push({
                                       type: $filter("filter")(vm.data.keywordTypes, {typeValue: 'startDate'})[0],
-                                      keyword: e.data[0]
+                                      date: e.data[0]
                                   });
                               }
                               $scope.$apply();
@@ -65,7 +65,7 @@
                     },
                     useVoronoi: false,
                     clipEdge: false,
-                    duration: 100,
+                    duration: 1000,
                     useInteractiveGuideline: true,
                     xAxis: {
                         expanded: true,
@@ -80,7 +80,8 @@
                     yAxis: {
                         tickFormat: function (d) {
                             return d3.format('s')(d);
-                        }
+                        },
+                        axisLabel: 'Number of Documents'
                     }
                 },
                 title: {
@@ -89,7 +90,7 @@
                 },
                 subtitle: {
                     enable: true,
-                    text: 'How many documents landed on the frontpage between two specific dates?',
+                    text: 'How many submitted links landed on the frontpage between two specific dates? Click in the chart to change the start-date.',
                     css: {
                         'text-align': 'center',
                         'margin': '10px 13px 0px 7px',
@@ -106,18 +107,16 @@
                 query1.setKeywords("*:*");
                 query1.getImportancy().points = 0;
                 query1.getImportancy().age = 0;
-                //query1.fromDate = vm.data.startDate;
-                //query1.toDate = vm.data.endDate;
                 query1.addFilterQuery("content_type:document");
                 query1.setFilterQueryFromArray(vm.data.keywords);
                 var startDate = '2015-01-01T00:00:00Z';
                 var endDate = new Date().toISOString();
                 angular.forEach(vm.data.keywords, function(value) {
-                    if(value.type.typeValue == 'startDate' && value.keyword instanceof Date) {
-                        startDate = value.keyword.toISOString();
+                    if(value.type.typeValue == 'startDate' && value.date instanceof Date) {
+                        startDate = value.date.toISOString();
                     }
-                    if(value.type.typeValue == 'endDate'  && value.keyword instanceof Date) {
-                        endDate = value.keyword.toISOString();
+                    if(value.type.typeValue == 'endDate'  && value.date instanceof Date) {
+                        endDate = value.date.toISOString();
                     }
                 });
 
@@ -125,7 +124,6 @@
                 query1.addFacetTerms("frontpage", "on_frontpage", 2, 0, "date", {blockParent: "content_type:sourceitem"});
                 var solrReq_1 = new SolrRequest.Instance();
                 solrReq_1.setQuery(query1);
-                console.log(query1);
                 solrReq_1.loadNews().then(function () {
 
                     vm.chartdata[0].values = [];
@@ -150,7 +148,16 @@
                 });
             };
 
-            $scope.$watch("vm.data.keywords", vm.loadChart, true);
+            var loadChartTimeout;
+
+            function loadChartDelayed() {
+                if(loadChartTimeout !== undefined) {
+                    $timeout.cancel(loadChartTimeout);
+                }
+                loadChartTimeout = $timeout(vm.loadChart, 550);
+            }
+
+            $scope.$watch("vm.data", loadChartDelayed, true);
         }
 
     }

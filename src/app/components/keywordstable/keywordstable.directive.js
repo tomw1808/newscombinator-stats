@@ -3,13 +3,13 @@
 
     angular
         .module('newscombinatorKeywords')
-        .directive('dateChart',dateChart);
+        .directive('keywordsTable', dateChart);
 
     /** @ngInject */
     function dateChart(SolrRequest) {
         var directive = {
             restrict: 'E',
-            template: '<nvd3 options="vm.options" data="vm.chartdata"></nvd3>',
+            templateUrl: 'app/components/keywordstable/keywordstable.html',
             scope: {
                 data: '='
             },
@@ -24,126 +24,109 @@
         function ChartController($scope, $filter, $timeout) {
 
             var vm = this;
-
-            vm.options = {
+            vm.chartoptions = {
                 chart: {
-                    type: 'multiBarChart',
-                    height: 450,
-                    margin: {
-                        top: 20,
-                        right: 20,
-                        bottom: 100,
-                        left: 70
-                    },
+                    type: 'pieChart',
+                    height: 150,
+                    width: 150,
                     x: function (d) {
-                        return d[0];
+                        return d.key;
                     },
                     y: function (d) {
-                        return d[1];
+                        return d.y;
                     },
-                    multibar: {
-                      dispatch: {
-                          elementClick: function(e){
-                              var found = false;
-                              angular.forEach(vm.data.keywords, function(value) {
-                                  if(value.type.typeValue == 'startDate' && value.keyword instanceof Date) {
-                                      found = true;
-                                      value.keyword = e.data[0];
-                                  }
-
-                              });
-                              if(!found) {
-                                  vm.data.keywords.push({
-                                      type: $filter("filter")(vm.data.keywordTypes, {typeValue: 'startDate'})[0],
-                                      keyword: e.data[0]
-                                  });
-                              }
-                              $scope.$apply();
-                              vm.loadChart();
-                          }
-                      }
-                    },
-                    useVoronoi: false,
-                    clipEdge: false,
+                    showLabels: false,
                     duration: 1000,
-                    useInteractiveGuideline: true,
-                    xAxis: {
-                        expanded: true,
-                        showMaxMin: true,
-
-                        rotateLabels: -45,
-                        tickFormat: function (date) {
-                            return "From "+d3.time.format('%b %d, %Y')(new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()));
-                        }
-
-                    },
-                    yAxis: {
-                        tickFormat: function (d) {
-                            return d3.format('s')(d);
-                        }
-                    }
-                },
-                title: {
-                    enable: true,
-                    text: 'Date Chart'
-                },
-                subtitle: {
-                    enable: true,
-                    text: 'How many documents landed on the frontpage between two specific dates?',
-                    css: {
-                        'text-align': 'center',
-                        'margin': '10px 13px 0px 7px',
-                        'font-size': '80%'
-                    }
+                    labelThreshold: 1,
+                    labelSunbeamLayout: true,
+                    showLegend: false
                 }
+
             };
 
-            vm.chartdata = [{values: [], key: 'On Frontpage'}, {values: [], key: 'Not On Frontpage'}];
+            vm.keywordsdata = [];
+
+            vm.addKeyword = function (word) {
+
+                vm.data.keywords.push({
+                    type: $filter("filter")(vm.data.keywordTypes, {typeValue: 'general'})[0],
+                    keyword: word
+                });
+
+                //$scope.$apply();
+                vm.loadChart();
+            };
 
             vm.loadChart = function () {
 
+                vm.loading = true;
                 var query1 = new SolrQuery();
                 query1.setKeywords("*:*");
-                query1.getImportancy().points = 0;
+                query1.getImportancy().points = 5;
                 query1.getImportancy().age = 0;
-                //query1.fromDate = vm.data.startDate;
-                //query1.toDate = vm.data.endDate;
                 query1.addFilterQuery("content_type:document");
+                query1.addFilterQuery("on_frontpage:1");
                 query1.setFilterQueryFromArray(vm.data.keywords);
-                var startDate = '2015-01-01T00:00:00Z';
-                var endDate = new Date().toISOString();
-                angular.forEach(vm.data.keywords, function(value) {
-                    if(value.type.typeValue == 'startDate' && value.keyword instanceof Date) {
-                        startDate = value.keyword.toISOString();
-                    }
-                    if(value.type.typeValue == 'endDate'  && value.keyword instanceof Date) {
-                        endDate = value.keyword.toISOString();
+
+                query1.setRows(20);
+                query1.addFacetTerms("keywords", "title_terms", 30, 1);
+                query1.addFacetTerms("frontpage", "on_frontpage", 2, 0, "keywords", {blockParent: "content_type:sourceitem"});
+
+                var solrReq_1 = new SolrRequest.Instance();
+                solrReq_1.setQuery(query1);
+                solrReq_1.loadNews().then(function () {
+
+                    vm.loading = false;
+                    vm.topResults = solrReq_1.getResults();
+                    vm.keywordsdata = [];
+                    if (solrReq_1.getFacets().count > 0) {
+
+                        angular.forEach(solrReq_1.getFacets()["keywords"]["buckets"], function (value) {
+                            var chardata = [];
+                            angular.forEach(value.frontpage.buckets, function (val_frontpage) {
+                                if (val_frontpage.val == false) {
+                                    chardata.push({key: "Not on Frontpage", y: val_frontpage.count});
+                                } else {
+                                    chardata.push({key: "On Frontpage", y: val_frontpage.count});
+                                }
+                            });
+                            vm.keywordsdata.push({keyword: value, chartdata: chardata});
+
+                        });
+
                     }
                 });
 
-                query1.addFacetRange("date", "created_at", startDate, endDate, "+1MONTH", undefined, 0);
-                query1.addFacetTerms("frontpage", "on_frontpage", 2, 0, "date", {blockParent: "content_type:sourceitem"});
-                var solrReq_1 = new SolrRequest.Instance();
-                solrReq_1.setQuery(query1);
-                console.log(query1);
-                solrReq_1.loadNews().then(function () {
+                query1 = new SolrQuery();
+                query1.setKeywords("*:*");
+                query1.getImportancy().points = 5;
+                query1.getImportancy().age = 0;
+                query1.addFilterQuery("on_frontpage:0");
+                query1.setFilterQueryFromArray(vm.data.keywords);
 
-                    vm.chartdata[0].values = [];
-                    vm.chartdata[1].values = [];
-                    if (solrReq_1.getFacets().count > 0) {
-                        angular.forEach(solrReq_1.getFacets()["date"]["buckets"], function (value) {
-                            if (value.frontpage !== undefined) {
-                                angular.forEach(value.frontpage.buckets, function (value_fp) {
-                                    if (value_fp.val === true) {
-                                        vm.chartdata[0].values.push([new Date(value.val), value_fp.count]);
-                                    } else {
-                                        vm.chartdata[1].values.push([new Date(value.val), value_fp.count]);
-                                    }
-                                });
-                            } else {
-                                vm.chartdata[0].values.push([new Date(value.val), null]);
-                                vm.chartdata[1].values.push([new Date(value.val), null]);
-                            }
+                query1.setRows(20);
+                query1.addFacetTerms("keywords", "title_terms", 30, 1);
+                query1.addFacetTerms("frontpage", "on_frontpage", 2, 0, "keywords", {blockParent: "content_type:sourceitem"});
+
+                var solrReq_2 = new SolrRequest.Instance();
+                solrReq_2.setQuery(query1);
+                solrReq_2.loadNews().then(function () {
+
+                    vm.topResults_non_fp = solrReq_2.getResults();
+                    vm.keywordsdata_non_fp = [];
+                    if (solrReq_2.getFacets().count > 0) {
+
+                        angular.forEach(solrReq_2.getFacets()["keywords"]["buckets"], function (value) {
+                            var chardata = [];
+                            angular.forEach(value.frontpage.buckets, function (val_frontpage) {
+                                if (val_frontpage.val == false) {
+                                    chardata.push({key: "Not on Frontpage", y: val_frontpage.count});
+                                } else {
+                                    chardata.push({key: "On Frontpage", y: val_frontpage.count});
+                                }
+                            });
+                            vm.keywordsdata_non_fp.push({keyword: value, chartdata: chardata});
+
                         });
 
                     }
@@ -153,10 +136,12 @@
             var loadChartTimeout;
 
             function loadChartDelayed() {
-                if(loadChartTimeout !== undefined) {
+
+                vm.loading = true;
+                if (loadChartTimeout !== undefined) {
                     $timeout.cancel(loadChartTimeout);
                 }
-                loadChartTimeout = $timeout(vm.loadChart, 550);
+                loadChartTimeout = $timeout(vm.loadChart, 1500);
             }
 
             $scope.$watch("vm.data", loadChartDelayed, true);

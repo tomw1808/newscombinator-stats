@@ -21,7 +21,7 @@
         return directive;
 
         /** @ngInject */
-        function ChartController($scope, $filter) {
+        function ChartController($scope, $filter, $timeout) {
 
             var vm = this;
 
@@ -30,7 +30,22 @@
                     lines: {
                         dispatch: {
                             elementClick: function (e) {
-                                console.log(e)
+                                var found = false;
+                                angular.forEach(vm.data.keywords, function(value) {
+                                    if(value.type.typeValue == 'minPoints') {
+                                        found = true;
+                                        value.keyword = e[0].point.x;
+                                    }
+
+                                });
+                                if(!found) {
+                                    vm.data.keywords.push({
+                                        type: $filter("filter")(vm.data.keywordTypes, {typeValue: 'minPoints'})[0],
+                                        keyword: e[0].point.x
+                                    });
+                                }
+                                //$scope.$apply();
+                                vm.loadChart();
                             }
                         }
                     },
@@ -47,7 +62,7 @@
                     },
 
                     type: 'lineChart',
-                    height: 400,
+                    height: 500,
                     margin: {
                         top: 20,
                         right: 20,
@@ -116,9 +131,16 @@
                     }
                 });
             };
+            var loadChartTimeout;
 
-            $scope.$watch("vm.data.keywords", vm.loadChart, true);
-            $scope.$watch("vm.data", vm.loadChart);
+            function loadChartDelayed() {
+                if(loadChartTimeout !== undefined) {
+                    $timeout.cancel(loadChartTimeout);
+                }
+                loadChartTimeout = $timeout(vm.loadChart, 550);
+            }
+
+            $scope.$watch("vm.data", loadChartDelayed, true);
 
         }
 

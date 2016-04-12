@@ -21,7 +21,7 @@
         return directive;
 
         /** @ngInject */
-        function ChartController($scope, $filter) {
+        function ChartController($scope, $filter, $timeout) {
 
             var vm = this;
 
@@ -43,11 +43,11 @@
             vm.options = {
                 chart: {
                     type: 'multiBarChart',
-                    height: 450,
+                    height: 500,
                     margin: {
                         top: 20,
                         right: 20,
-                        bottom: 30,
+                        bottom: 50,
                         left: 70
                     },
                     x: function (d) {
@@ -75,12 +75,14 @@
                         tickValues: [0, 1, 2, 3, 4, 5, 6],
                         tickFormat: function (d) {
                             return intDayToStringDay[d];
-                        }
+                        },
+                        axisLabel: 'Days of the Week'
                     },
                     yAxis: {
                         tickFormat: function (d) {
                             return d3.format('s')(d);
-                        }
+                        },
+                        axisLabel: 'Number of Documents'
                     },
                     sortDescending: false
                 },
@@ -90,7 +92,7 @@
                 },
                 subtitle: {
                     enable: true,
-                    text: 'This charts shows on which weekday how many documents were upvotes until the frontpage and which never landed there. It is sorted from the highest amount to the lowest. Sidenote: If you select documents which are posted on e.g. Monday, then you can see when the documents have been crossposted as well.',
+                    text: 'This charts shows on which weekday how many submitted links were upvotes until the frontpage and how many never made it there. It is sorted from the highest amount per weekday to the lowest. Sidenote: If you select documents which are posted on e.g. Monday, then you can see when the documents have been crossposted as well.',
                     css: {
                         'text-align': 'center',
                         'margin': '10px 13px 0px 7px',
@@ -114,7 +116,6 @@
                 query1.addFacetTerms("frontpage", "on_frontpage", 2, 0, "day_of_the_week", {blockParent: "content_type:sourceitem"});
                 var solrReq_1 = new SolrRequest.Instance();
                 solrReq_1.setQuery(query1);
-                console.log(query1);
                 solrReq_1.loadNews().then(function () {
 
                     vm.chartdata[0].values = [];
@@ -138,9 +139,16 @@
                     }
                 });
             };
+            var loadChartTimeout;
 
-            $scope.$watch("vm.data.keywords", vm.loadChart, true);
-            $scope.$watch("vm.data", vm.loadChart);
+            function loadChartDelayed() {
+                if(loadChartTimeout !== undefined) {
+                    $timeout.cancel(loadChartTimeout);
+                }
+                loadChartTimeout = $timeout(vm.loadChart, 550);
+            }
+
+            $scope.$watch("vm.data", loadChartDelayed, true);
 
         }
 

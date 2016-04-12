@@ -21,7 +21,7 @@
         return directive;
 
         /** @ngInject */
-        function ChartController($scope, $filter) {
+        function ChartController($scope, $filter, $timeout) {
 
             var vm = this;
 
@@ -32,7 +32,7 @@
                     margin: {
                         top: 20,
                         right: 20,
-                        bottom: 30,
+                        bottom: 50,
                         left: 70
                     },
                     x: function (d) {
@@ -60,7 +60,11 @@
                     yAxis: {
                         tickFormat: function (d) {
                             return d3.format('s')(d);
-                        }
+                        },
+                        axisLabel: '#Documents'
+                    },
+                    xAxis: {
+                        axisLabel: 'Hours of the Day'
                     }
                 },
                 title: {
@@ -93,7 +97,6 @@
                 query1.addFacetTerms("frontpage", "on_frontpage", 2, 0, "hours_of_the_day", {blockParent: "content_type:sourceitem"});
                 var solrReq_1 = new SolrRequest.Instance();
                 solrReq_1.setQuery(query1);
-                console.log(query1);
                 solrReq_1.loadNews().then(function () {
 
                     vm.chartdata[0].values = [];
@@ -117,9 +120,16 @@
                     }
                 });
             };
+            var loadChartTimeout;
 
-            $scope.$watch("vm.data.keywords", vm.loadChart, true);
-            $scope.$watch("vm.data", vm.loadChart);
+            function loadChartDelayed() {
+                if(loadChartTimeout !== undefined) {
+                    $timeout.cancel(loadChartTimeout);
+                }
+                loadChartTimeout = $timeout(vm.loadChart, 550);
+            }
+
+            $scope.$watch("vm.data", loadChartDelayed, true);
 
         }
 

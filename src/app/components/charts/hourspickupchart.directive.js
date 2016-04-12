@@ -3,10 +3,10 @@
 
     angular
         .module('newscombinatorKeywords')
-        .directive('hoursChart', hoursChart);
+        .directive('hoursPickupChart', hoursPickupChart);
 
     /** @ngInject */
-    function hoursChart(SolrRequest) {
+    function hoursPickupChart(SolrRequest) {
         var directive = {
             restrict: 'E',
             template: '<nvd3 options="vm.options" data="vm.chartdata"></nvd3>',
@@ -27,43 +27,54 @@
 
             vm.options = {
                 chart: {
-                    type: 'multiBarChart',
-                    height: 450,
+                    type: 'multiChart',
+                    height: 500,
                     margin: {
                         top: 20,
-                        right: 20,
+                        right: 60,
                         bottom: 50,
                         left: 70
                     },
-                    x: function (d) {
-                        return d[0];
-                    },
-                    y: function (d) {
-                        return d[1];
-                    },
-                    multibar: {
+                    duration: 1000,
+                    reduceXTicks: false,
+                    useInteractiveGuideline: true,
+                    bars1: {
+                        stacked: true,
                         dispatch: {
-                            elementClick: function (e) {
-                                vm.data.keywords.push({
-                                    type: $filter("filter")(vm.data.keywordTypes, {typeValue: 'found_hours_is'})[0],
-                                    keyword: e.data[0]
+                            elementClick: function(e) {
+                                var found = false;
+                                angular.forEach(vm.data.keywords, function(value) {
+                                    if(value.type.typeValue == 'found_hours_is') {
+                                        found = true;
+                                        value.keyword = e.data.x;
+                                    }
+
                                 });
-                                $scope.$apply();
+                                if(!found) {
+                                    vm.data.keywords.push({
+                                        type: $filter("filter")(vm.data.keywordTypes, {typeValue: 'found_hours_is'})[0],
+                                        keyword: e.data.x
+                                    });
+                                }
+                                //$scope.$apply();
                                 vm.loadChart();
                             }
-
                         }
                     },
-                    duration: 1000,
-                    useInteractiveGuideline: true,
-                    reduceXTicks: false,
-                    yAxis: {
+                    yAxis1: {
                         tickFormat: function (d) {
                             return d3.format('s')(d);
                         },
-                        axisLabel: '#Documents'
+                        axisLabel: 'Number of Documents'
+                    },
+                    yAxis2: {
+                        tickFormat: function (d) {
+                            return d+"%";
+                        },
+                        axisLabel: 'Pickup Rate'
                     },
                     xAxis: {
+
                         axisLabel: 'Hours of the Day'
                     }
                 },
@@ -73,7 +84,7 @@
                 },
                 subtitle: {
                     enable: true,
-                    text: 'This chart shows at which time of the day how many documents landed on the frontpage and which ones not.',
+                    text: 'This chart shows at which time of the day how many submitted links landed on the frontpage and which ones not. If documents are submitted twice and one time it reaches the frontpage and one time it will not make it there, it will be counted twice.',
                     css: {
                         'text-align': 'center',
                         'margin': '10px 13px 0px 7px',
@@ -82,7 +93,7 @@
                 }
             };
 
-            vm.chartdata = [{values: [], key: 'On Frontpage'}, {values: [], key: 'Not On Frontpage'}];
+            vm.chartdata = [{values: [], key: 'On Frontpage', yAxis:1, type:'bar'}, {values: [], key: 'Not On Frontpage', yAxis:1, type:'bar'}, {values: [], key: 'Pickup Rate', yAxis:2, type:'line'}];
 
             vm.loadChart = function () {
 
@@ -101,19 +112,28 @@
 
                     vm.chartdata[0].values = [];
                     vm.chartdata[1].values = [];
+                    vm.chartdata[2].values = [];
                     if (solrReq_1.getFacets().count > 0) {
                         angular.forEach(solrReq_1.getFacets()["hours_of_the_day"]["buckets"], function (value) {
                             if (value.frontpage !== undefined) {
+                                var on_frontpage = 0;
+                                var not_on_frontpage = 0;
+
                                 angular.forEach(value.frontpage.buckets, function (value_fp) {
                                     if (value_fp.val === true) {
-                                        vm.chartdata[0].values.push([value.val, value_fp.count]);
+                                        vm.chartdata[0].values.push({x :value.val, y:value_fp.count});
+                                        on_frontpage = value_fp.count;
                                     } else {
-                                        vm.chartdata[1].values.push([value.val, value_fp.count]);
+                                        vm.chartdata[1].values.push({x :value.val, y:value_fp.count});
+                                        not_on_frontpage = value_fp.count;
                                     }
                                 });
+
+                                vm.chartdata[2].values.push({x: value.val, y: Math.round((on_frontpage / (not_on_frontpage+on_frontpage))*100)});
                             } else {
-                                vm.chartdata[0].values.push([value.val, null]);
-                                vm.chartdata[1].values.push([value.val, null]);
+                                vm.chartdata[0].values.push({x :value.val, y:0});
+                                vm.chartdata[1].values.push({x :value.val, y:null});
+                                vm.chartdata[2].values.push({x :value.val, y:null});
                             }
                         });
 

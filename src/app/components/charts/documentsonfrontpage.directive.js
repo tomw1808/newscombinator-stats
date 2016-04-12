@@ -21,14 +21,14 @@
         return directive;
 
         /** @ngInject */
-        function ChartController($scope, $filter) {
+        function ChartController($scope, $filter, $timeout) {
 
             var vm = this;
 
             vm.options = {
                 chart: {
                     type: 'stackedAreaChart',
-                    height: 450,
+                    height: 500,
                     margin: {
                         top: 20,
                         right: 20,
@@ -102,9 +102,16 @@
                     }
                 });
             };
+            var loadChartTimeout;
 
-            $scope.$watch("vm.data.keywords", vm.loadChart, true);
-            $scope.$watch("vm.data", vm.loadChart);
+            function loadChartDelayed() {
+                if(loadChartTimeout !== undefined) {
+                    $timeout.cancel(loadChartTimeout);
+                }
+                loadChartTimeout = $timeout(vm.loadChart, 550);
+            }
+
+            $scope.$watch("vm.data", loadChartDelayed, true);
 
         }
 

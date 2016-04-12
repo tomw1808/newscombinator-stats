@@ -1,10 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<div layout="column">
+    <div layout="row">
+    <div  flex-offset="25" flex="50">
+    <h2>Keywords</h2>
+    <p>It shows keywords from documents which made it to the frontpage vs which never made it to the frontpage.
+        Sometimes documents are posted several times and only one submission is making it to the frontpage, which
+        eventually lead to duplicated keywords in this column and on the right side..</p>
+    </div>
+    </div>
+    <div layout="row">
 
-</body>
-</html>
+        <div flex layout="column">
+            <h3>Top Keywords which made it to the Frontpage</h3>
+            <md-progress-linear md-mode="indeterminate" ng-show="vm.loading"></md-progress-linear>
+            <md-card ng-repeat="result in vm.keywordsdata" ng-hide="vm.loading">
+                <md-card-content>
+
+                    <div layout="row">
+                        <nvd3 options="vm.chartoptions" data="result.chartdata"></nvd3>
+                        <div layout="column">
+                            <strong><a ng-click="vm.addKeyword(result.keyword.val);" href="">{{result.keyword.val}}</a></strong>
+                            <p>{{result.keyword.count}} times in total<br/>
+                                {{result.chartdata[0].y}} times {{result.chartdata[0].key}}<br/>
+                                {{result.chartdata[1].y}} times {{result.chartdata[1].key}}</p>
+                        </div>
+                    </div>
+
+
+                </md-card-content>
+            </md-card>
+        </div>
+        <div flex layout="column">
+            <h3>Keywords from documents not on the Frontpage</h3>
+
+            <md-progress-linear md-mode="indeterminate" ng-show="vm.loading"></md-progress-linear>
+            <md-card ng-repeat="result in vm.keywordsdata_non_fp" ng-hide="vm.loading">
+                <md-card-content>
+
+                    <div layout="row">
+                        <nvd3 options="vm.chartoptions" data="result.chartdata"></nvd3>
+                        <div layout="column">
+                            <strong><a ng-click="vm.addKeyword(result.keyword.val);" href="">{{result.keyword.val}}</a></strong>
+                            <p>{{result.keyword.count}} times in total<br/>
+                                {{result.chartdata[0].y}} times {{result.chartdata[0].key}}<br/>
+                                {{result.chartdata[1].y}} times {{result.chartdata[1].key}}</p>
+                        </div>
+                    </div>
+
+
+                </md-card-content>
+            </md-card>
+        </div>
+    </div>
+
+</div>
+<div layout="column">
+    <h2>Highest Voted Search Results</h2>
+    <p>It shows the documents which receied the most points across different portals. For example, a cross post on
+        Reddit and Ycombinator with 50 points (upvotes) each, will result in a total of 100 points here.</p>
+    <div layout="row">
+        <div flex="50" layout="column">
+            <h3>Highest Voted Documents on Frontpage</h3>
+
+            <md-card ng-repeat="result in vm.topResults" ng-hide="vm.loading">
+                <md-card-content>
+                    <h4>{{result.title_link}}</h4>
+                    <p><a href="{{result.url}}" target="_blank">{{result.url}}</a></p>
+                    <p>{{result.content_short}}</p>
+                </md-card-content>
+                <md-card-footer>
+                    <small>Found: {{result.created_at | date:'short'}} &bull;
+                        <md-icon>arrow_drop_up</md-icon>
+                        {{result.num_total_points}} &bull;
+                        <md-icon>forum</md-icon>
+                        {{result.num_total_comments}}
+                    </small>
+                </md-card-footer>
+            </md-card>
+            <md-progress-linear md-mode="indeterminate" ng-show="vm.loading"></md-progress-linear>
+        </div>
+        <div flex="50" layout="column">
+            <h3>Highest Voted Documents never on Frontpage</h3>
+
+            <md-card ng-repeat="result in vm.topResults_non_fp" ng-hide="vm.loading">
+                <md-card-content>
+                    <h4>{{result.title_link}}</h4>
+                    <p><a href="{{result.url}}" target="_blank">{{result.url}}</a></p>
+                    <p>{{result.content_short}}</p>
+                </md-card-content>
+                <md-card-footer>
+                    <small>Found: {{result.created_at | date:'short'}} &bull;
+                        <md-icon>arrow_drop_up</md-icon>
+                        {{result.num_total_points}} &bull;
+                        <md-icon>forum</md-icon>
+                        {{result.num_total_comments}}
+                    </small>
+                </md-card-footer>
+            </md-card>
+            <md-progress-linear md-mode="indeterminate" ng-show="vm.loading"></md-progress-linear>
+        </div>
+    </div>
+</div>

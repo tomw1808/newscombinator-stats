@@ -129,7 +129,7 @@ SolrQuery.prototype.setFilterQueryFromArray = function (arrayValues) {
         if (value.type.type == 'text') {
             query1.addFilterQuery(value.type.prefix + query1.solrEscape(value.keyword) + value.type.postfix);
         } else if (value.type.type == 'datepicker') {
-            query1.addFilterQuery(value.type.prefix + value.keyword.toISOString() + value.type.postfix);
+            query1.addFilterQuery(value.type.prefix + value.date.toISOString() + value.type.postfix);
         } else if (value.type.type == 'slider') {
             query1.addFilterQuery(value.type.prefix + value.keyword + value.type.postfix);
         } else if (value.type.type == 'select') {
