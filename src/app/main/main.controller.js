@@ -105,7 +105,7 @@
             });
             vm.keywords.push({
                 type: $filter("filter")(vm.keywordTypes, {typeValue: 'linkTitle'})[0],
-                keyword: "Keyword Analytics"
+                keyword: "Show HN"
             });
             vm.keywords.push({
                 type: $filter("filter")(vm.keywordTypes, {typeValue: 'startDate'})[0],

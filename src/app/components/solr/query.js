@@ -122,18 +122,28 @@ SolrQuery.prototype.solrEscape = function (inputValue) {
 SolrQuery.prototype.setFilterQueryFromArray = function (arrayValues) {
 
     var query1 = this;
+    var query_reset = false;
     angular.forEach(arrayValues, function (value) {
         if (value.keyword == "") {
             return;
         }
+
+        if(!query_reset) {
+            query1.keywords = "";
+            query_reset = true;
+        }
         if (value.type.type == 'text') {
             query1.addFilterQuery(value.type.prefix + query1.solrEscape(value.keyword) + value.type.postfix);
+            query1.keywords += value.type.prefix + query1.solrEscape(value.keyword) + value.type.postfix + " ";
         } else if (value.type.type == 'datepicker') {
             query1.addFilterQuery(value.type.prefix + value.date.toISOString() + value.type.postfix);
+            query1.keywords += value.type.prefix + value.date.toISOString() + value.type.postfix + " ";
         } else if (value.type.type == 'slider') {
             query1.addFilterQuery(value.type.prefix + value.keyword + value.type.postfix);
+            query1.keywords += value.type.prefix + value.keyword + value.type.postfix + " ";
         } else if (value.type.type == 'select') {
             query1.addFilterQuery(value.type.prefix + value.keyword + value.type.postfix);
+            query1.keywords += value.type.prefix + value.keyword + value.type.postfix + " ";
         }
 
         if (value.type.override !== undefined) {
