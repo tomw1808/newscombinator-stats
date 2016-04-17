@@ -8,9 +8,9 @@ A saying among data scientists is "Know you data". Statistics doesn't have to be
 # Used Technologies
 This frontend uses AngularJS and Material. It is basically the gulp-angular generator from yeoman.
 
-On the backend there is a custom crawler, and a Lucene Index with a Solr Server on top. To filter the data, machine learning (LibLINEAR) is applied to the dataset.
+On the backend there is a custom crawler, and a Lucene Index with a Solr Server on top. In addition, to filter the data for the Smart-Filters, machine learning (LibLINEAR) is applied to the dataset. 
 
-The Facetting is used in its newest incarnation: json.facet. This is supported by Solr >5 and you can read more about that [here](http://yonik.com/json-facet-api/).
+For the Stats-App, the Solr-Facetting is used in its newest incarnation: json.facet. This is supported by Solr >5 and you can read more about that [here](http://yonik.com/json-facet-api/).
 
 # Demo
 
