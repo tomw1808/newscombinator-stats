@@ -1,3 +1,9 @@
+# Newscombinator Crawl and Index Stats
+> Know your Data
+
+[Newscombinator Statistics](http://tomw1808.github.io/newscombinator-stats/#/) by [Newscombinator](http://www.newscombinator.com)
+
+
 # Summary
 This repository is dedicated to provide some interactive statistics. The links come from submissions on Hacker News, Reddit, Inbound and others and were crawled by The Newscombinator. It provides (Keyword and other) Statistics of around 1 Million links, browseable and filterable in a nice manner. We use it internally, mostly. 
 
