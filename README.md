@@ -1,9 +1,9 @@
 # Summary
-This repository is dedicated to provide some interactive statistics about links crawled by the newscombinator. Statistics doesn't have to be that ugly, or? It provides (Keyword and other) Statistics of around 1 Million links, browseable and filterable in a nice manner. We use it internally, mostly. 
+This repository is dedicated to provide some interactive statistics. The links come from submissions on Hacker News, Reddit, Inbound and others and were crawled by The Newscombinator. It provides (Keyword and other) Statistics of around 1 Million links, browseable and filterable in a nice manner. We use it internally, mostly. 
 
 ![newscombinator-stats](https://github.com/tomw1808/newscombinator-stats/blob/master/src/assets/images/demo.gif "Newscombinator Stats Demo")
 
-A saying among data scientists is "Know you data". So this tool is used internally to get a better picture of the data in the index.
+A saying among data scientists is "Know you data". Statistics doesn't have to be that ugly, or? So this tool is used internally to get a better picture of the data in the index.
 
 # Used Technologies
 This frontend uses AngularJS and Material. It is basically the gulp-angular generator from yeoman.
